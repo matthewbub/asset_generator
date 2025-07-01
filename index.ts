@@ -20,6 +20,7 @@ interface SystemPromptConfig {
 
 const CONFIG_FILE = path.join(process.cwd(), '.asset-generator-config.json');
 const ASSETS_DIR = path.join(process.cwd(), 'assets');
+const ENV_FILE = path.join(process.cwd(), '.env');
 
 function loadSystemPromptConfig(): SystemPromptConfig {
   try {
@@ -50,6 +51,88 @@ function combinePrompts(userPrompt: string, systemPrompt?: string): string {
     return userPrompt;
   }
   return `${systemPrompt}\n\n${userPrompt}`;
+}
+
+async function promptForApiKey(): Promise<string> {
+  console.log('\n🔑 OpenAI API Key Setup');
+  console.log('Your API key is required to generate images.');
+  console.log('You can find your API key at: https://platform.openai.com/api-keys\n');
+  
+  const answer = await inquirer.prompt([
+    {
+      type: 'password',
+      name: 'apiKey',
+      message: 'Enter your OpenAI API key:',
+      mask: '*',
+      validate: (input: string) => {
+        if (!input.trim()) {
+          return 'API key is required';
+        }
+        if (!input.startsWith('sk-')) {
+          return 'OpenAI API keys should start with "sk-"';
+        }
+        return true;
+      }
+    }
+  ]);
+  
+  return answer.apiKey.trim();
+}
+
+async function validateApiKey(apiKey: string): Promise<boolean> {
+  console.log('\n🔍 Validating API key...');
+  
+  try {
+    const openai = new OpenAI({ apiKey });
+    await openai.models.list();
+    console.log('✅ API key is valid!');
+    return true;
+  } catch (error) {
+    console.log('❌ API key validation failed.');
+    if (error instanceof Error) {
+      console.log(`Error: ${error.message}`);
+    }
+    return false;
+  }
+}
+
+function writeEnvFile(apiKey: string): void {
+  try {
+    let envContent = '';
+    
+    if (fs.existsSync(ENV_FILE)) {
+      envContent = fs.readFileSync(ENV_FILE, 'utf8');
+      
+      if (envContent.includes('OPENAI_API_KEY=')) {
+        envContent = envContent.replace(/OPENAI_API_KEY=.*$/m, `OPENAI_API_KEY=${apiKey}`);
+      } else {
+        envContent += `\nOPENAI_API_KEY=${apiKey}`;
+      }
+    } else {
+      envContent = `OPENAI_API_KEY=${apiKey}\n`;
+    }
+    
+    fs.writeFileSync(ENV_FILE, envContent);
+    console.log('✅ API key saved to .env file');
+  } catch (error) {
+    console.error('❌ Error writing to .env file:', error);
+    throw error;
+  }
+}
+
+async function checkEnvSetup(): Promise<void> {
+  while (!process.env.OPENAI_API_KEY) {
+    const apiKey = await promptForApiKey();
+    
+    if (await validateApiKey(apiKey)) {
+      writeEnvFile(apiKey);
+      process.env.OPENAI_API_KEY = apiKey;
+      console.log('\n🎉 Setup complete! You can now generate images.\n');
+      break;
+    } else {
+      console.log('\n🔄 Please try again with a valid API key.\n');
+    }
+  }
 }
 
 async function generateAssetWithResponses(prompt: string, previousImageCallId?: string): Promise<ImageGenerationResult> {
@@ -298,6 +381,8 @@ async function manageSystemPrompt(): Promise<void> {
 async function startInteractiveSession() {
   console.log('🎨 Welcome to AI Asset Generator!');
   console.log('Generate stunning images with AI-powered prompts.\n');
+  
+  await checkEnvSetup();
   
   let lastImageResult: ImageGenerationResult | null = null;
   
