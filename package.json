@@ -1,0 +1,30 @@
+{
+  "name": "asset_generator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "bin": {
+    "asset-generator": "./index.ts"
+  },
+  "scripts": {
+    "dev": "tsx index.ts",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@8.9.0+sha512.ef8859938e1f0537b9fcf0309044311392f3b38b344176e6cd4fdee21b225524b0ac2a1b08ae2ae2ddd5b3ff4b8ca496d6778e950f3e7c9f555b81325982441c",
+  "dependencies": {
+    "@types/inquirer": "^9.0.8",
+    "commander": "^14.0.0",
+    "inquirer": "^12.6.3",
+    "openai": "^5.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.4",
+    "dotenv": "^16.6.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,5 @@
+.env
+assets
+node_modules
+index.js
+.asset-generator-config.json
