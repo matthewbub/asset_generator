@@ -5,7 +5,7 @@ Generate ai images via CLI
 ## Setup
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/matthewbub/asset_generator
 cd asset_generator
 pnpm install
 cp .env.example .env  # add your OpenAI API key
